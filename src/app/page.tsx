@@ -1,37 +1,70 @@
-'use client';
-import React from 'react';
-import { type ReactNode, useState } from 'react';
-import Player from './components/musixPlayer';
-import { useQuery } from 'react-query';
-import { getAlbumDetails } from './api/api';
-import { useAtom } from 'jotai';
-import { albumDataAtom } from '@/atoms';
+"use client";
+import React from "react";
+import { type ReactNode, useState } from "react";
+import Player from "./components/musixPlayer";
+import { getAlbumDetails } from "./api/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useGlobalAudioPlayer } from "react-use-audio-player";
 
 export default function Home(): ReactNode {
-    const [albumData, setAlbumData] = useAtom(albumDataAtom);
-    const [albumID, setAlbumID] = useState(0);
+  const queryClient = useQueryClient();
+  const { stop, play, playing, togglePlayPause } = useGlobalAudioPlayer();
+  const [cardId, setCardId] = useState(1142502);
+  const [cardClicked, setCardClicked] = useState(false)
+  const { data } = useQuery({
+    queryKey: ["cardData"],
+    queryFn: async () => {
+      const albumData = await getAlbumDetails(cardId);
+      console.log(albumData);
+      return albumData.data;
+    },
+  });
 
-    const { data } = useQuery({
-        queryKey: ['trackdetails'],
-        queryFn: async () => {
-            const albumData = await getAlbumDetails(albumID);
-            localStorage.setItem('albumData', JSON.stringify(albumData));
-            // console.log(albumData);
-            setAlbumData(albumData);
-            return albumData;
-        },
-    });
+  return (
+    <main
+      className="
+      bg-slate-800
+      "
+    >
+      <div className="text-gray-300">
+        <div>{cardId}</div>
+        <div
+          onClick={() => {
+            setCardId(1052498);
+            queryClient.invalidateQueries({ queryKey: ["cardData"] });
+            console.log("tum bin");
+            togglePlayPause();
+          }}
+          className="hover:text-gray-100 hover:font-bold card p-5 bg-gray-600 cursor-pointer border-x-2 border-t-2 border-black"
+        >
+          Tum bin
+        </div>
+        <div
+          onClick={() => {
+            setCardId(1142502);
+            queryClient.invalidateQueries({ queryKey: ["cardData"] });
+            console.log("imagine dragons");
+            togglePlayPause();
+          }}
+          className=" hover:text-gray-100 hover:font-bold  card p-5 bg-gray-600 cursor-pointer border-x-2 border-t-2 border-black"
+        >
+          Imagine dragons
+        </div>
 
-    return (
-        <main>
-            <div>
-                <div onClick={()=> setAlbumID(1142502)} className='p-5 bg-gray-600'>Tum bin</div>
-                <div className="card">Playlist</div>
-                <div className="card">Arijit Singh</div>
-            </div>
-            <div className="p-3">
-                <Player albumID={albumID} />
-            </div>
-        </main>
-    );
+        <div className="hover:text-gray-100  hover:font-bold p-5 bg-gray-600  cursor-pointer border-x-2 border-t-2 border-black">
+          Playlist
+        </div>
+        <div className="hover:text-gray-100  hover:font-bold p-5 bg-gray-600  cursor-pointer  border-x-2 border-t-2 border-b-2 border-black">
+          Artist
+        </div>
+      </div>
+      {data ? (
+        <div className="p-3">
+          <Player cardData={data} cardClicked={cardClicked} />
+        </div>
+      ) : (
+        ""
+      )}
+    </main>
+  );
 }
